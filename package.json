@@ -1,0 +1,24 @@
+{
+  "name": "express-model-helper",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/polaris340/express-model-helper.git"
+  },
+  "author": "Jiho Hong",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/polaris340/express-model-helper/issues"
+  },
+  "homepage": "https://github.com/polaris340/express-model-helper#readme",
+  "dependencies": {
+    "knex": "^0.13.0",
+    "lodash": "^4.17.4",
+    "mysql": "^2.13.0"
+  }
+}

@@ -7,6 +7,8 @@ const initialize = dbConfig => {
     client: 'mysql',
     connection: dbConfig
   });
+
+  return Model;
 };
 
 module.exports = {

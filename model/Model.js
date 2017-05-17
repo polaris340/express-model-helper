@@ -53,7 +53,7 @@ class Model {
     const hiddenColumnsSet = new Set(this.hiddenColumns);
     return [...(this.columns
       .filter(c => !hiddenColumnsSet.has(c.name))
-      .map(c => `${c.name} as ${this.aliasFunc(c.name)}`))];
+      .map(c => `${tableName}.${c.name} as ${this.aliasFunc(c.name)}`))];
   }
 
   static select() {

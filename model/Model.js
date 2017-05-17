@@ -64,6 +64,8 @@ class Model {
   }
 
   static async createTable() {
+    const created = await this.db.schema.hasTable(this.tableName);
+    if (created) return;
     return await this.db.schema.createTableIfNotExists(this.tableName, table => {
       this.columns.forEach(c => createColumn(table, c));
 

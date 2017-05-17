@@ -9,12 +9,14 @@ module.exports = (rootPath, excludeDirectories = ['.git', 'node_modules']) => {
     filters: excludeDirectories
   });
 
+  const basePath = rootPath[0] === '/' ? '' : process.cwd() + '/';
+
   const models = {}; // {tableName: {model: class, references: [table names], created: false}}
   const createOrder = [];
 
   walker.on('file', function (root, stat, next) {
     // Add this file to the list of files
-    files.push(process.cwd() + '/' + root + '/' + stat.name);
+    files.push(basePath + root + '/' + stat.name);
     next();
   });
 

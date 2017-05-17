@@ -56,7 +56,7 @@ class Model {
       .map(c => `${c.name} as ${this.aliasFunc(c.name)}`))];
   }
 
-  static get select() {
+  static select() {
     return this.table.select(this.getAliasedColumnNames());
   }
 

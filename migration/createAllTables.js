@@ -14,7 +14,7 @@ module.exports = (rootPath, excludeDirectories = ['.git', 'node_modules']) => {
 
   walker.on('file', function (root, stat, next) {
     // Add this file to the list of files
-    files.push(root + '/' + stat.name);
+    files.push(process.cwd() + '/' + root + '/' + stat.name);
     next();
   });
 
@@ -30,7 +30,6 @@ module.exports = (rootPath, excludeDirectories = ['.git', 'node_modules']) => {
 
   walker.on('end', async function () {
     files.filter(f => {
-      if (f.startsWith('./node_modules/')) return false;
       if (!f.endsWith('.js')) return false;
 
       return true;
@@ -38,7 +37,7 @@ module.exports = (rootPath, excludeDirectories = ['.git', 'node_modules']) => {
       const content = fs.readFileSync(path);
       if (/class\s+\w+\s+extends\s+Model(\s+|{)/.test(content)) {
         console.log('processing file', path);
-        const model = require('../' + path);
+        const model = require(path);
         models[model.tableName] = {
           added: false,
           model: model,

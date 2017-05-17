@@ -49,14 +49,15 @@ class Model {
     return this._tableName || (this._tableName = toSnakecase(/class\s+(\S+)\s+.+/.exec(this.toString())[1]));
   }
 
-  static get select() {
+  static getAliasedColumnNames(tableName = this.tableName) {
     const hiddenColumnsSet = new Set(this.hiddenColumns);
+    return [...(this.columns
+      .filter(c => !hiddenColumnsSet.has(c.name))
+      .map(c => `${c.name} as ${this.aliasFunc(c.name)}`))];
+  }
 
-    return this.table.select(
-      ...(this.columns
-        .filter(c => !hiddenColumnsSet.has(c.name))
-        .map(c => `${c.name} as ${this.aliasFunc(c.name)}`))
-    );
+  static get select() {
+    return this.table.select(this.getAliasedColumnNames());
   }
 
   static get table() {

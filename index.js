@@ -14,5 +14,6 @@ const initialize = dbConfig => {
 module.exports = {
   initialize,
   Model,
-  caseHelper
+  caseHelper,
+  createAllTables: require('./migration/createAllTables')
 };

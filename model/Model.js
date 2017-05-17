@@ -1,5 +1,21 @@
 const {toCamelcase, toSnakecase} = require('../helper/caseHelper');
 
+const createColumn = (table, columnData) => {
+  let col = null;
+  if (columnData.references) {
+    // increments() -> integer('id', 10).unsigned()
+    col = table.integer(columnData.name, 10).unsigned();
+  } else {
+    col = table[columnData.type](columnData.name, ...(columnData.params || []));
+  }
+  if (columnData.unique) col.unique();
+  if (columnData.index) col.index();
+  if (columnData.references) col.references(columnData.references);
+  if (columnData.notNullable) col.notNullable();
+  if (columnData.default) col.defaultTo(columnData.default);
+};
+
+
 class Model {
 
   static get columns() {
@@ -8,7 +24,7 @@ class Model {
         name: 'id',
         type: 'increments', // table.increments(),
         params: [] // table.increments('id', ...params)
-        //default: ___ // __.defaultTo(default
+        //default: ___ // __.defaultTo(default),
         // index: true,
         // unique: true,
         // references: 'user.id',
@@ -30,16 +46,16 @@ class Model {
   }
 
   static get tableName() {
-    return toSnakecase(/class\s+(\S+)\s+.+/.exec(this.toString())[1]);
+    return this._tableName || (this._tableName = toSnakecase(/class\s+(\S+)\s+.+/.exec(this.toString())[1]));
   }
 
   static get select() {
     const hiddenColumnsSet = new Set(this.hiddenColumns);
 
     return this.table.select(
-      ...this.columns
+      ...(this.columns
         .filter(c => !hiddenColumnsSet.has(c.name))
-        .map(c => `${c.name} as ${toCamelcase(c.name)}`)
+        .map(c => `${c.name} as ${this.aliasFunc(c.name)}`))
     );
   }
 
@@ -49,26 +65,23 @@ class Model {
 
   static async createTable() {
     return await this.db.schema.createTableIfNotExists(this.tableName, table => {
-      this.columns.forEach(c => {
-        let col = null;
-        if (c.references) {
-          // knex에서 increments()를 int(10) unsigned로 만듬
-          col = table.integer(c.name, 10).unsigned();
-        } else {
-          col = table[c.type](c.name, ...(c.params || []));
+      this.columns.forEach(c => createColumn(table, c));
+
+      this.indexes.forEach(async i => {
+        try {
+          await table.index(i.columns, i.name, i.type);
+        } catch (e) {
+          console.log(e);
         }
-        if (c.unique) col.unique();
-        if (c.index) col.index();
-        if (c.references) col.references(c.references);
-        if (c.notNullable) col.notNullable();
-        if (c.default) col.defaultTo(c.default);
       });
 
-      this.indexes.forEach(i => {
-        table.index(i.columns, i.name, i.type);
+      this.uniques.forEach(async u => {
+        try {
+          await table.unique(u);
+        } catch (e) {
+          console.log(e);
+        }
       });
-
-      this.uniques.forEach(u => table.unique());
     });
   }
 
@@ -81,6 +94,7 @@ class Model {
 Model.ownColumns = [];
 Model.hiddenColumns = [];
 Model.immutableColumns = [];
+Model.aliasFunc = toCamelcase;
 
 
 Model.indexes = [

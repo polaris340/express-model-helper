@@ -119,11 +119,8 @@ class Model {
   static get qlType() {
     const fields = {};
     const hiddenColumnsSet = new Set(this.hiddenColumns);
-    this.columns
-      .filter(c => !hiddenColumnsSet.has(c.name))
-      .filter(c => !!c.references)
-      .forEach(c => {
-      fields[toCamelcase[c.name]] = {
+    this.columns.filter(c => !hiddenColumnsSet.has(c.name)).filter(c => !!c.references).forEach(c => {
+      fields[toCamelcase(c.name)] = {
         type: dbTypeQlTypeMap[c.type],
         description: c.description,
         resolve: obj => obj[c.name]

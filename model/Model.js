@@ -148,13 +148,13 @@ class Model {
   static get qlMutationType() {
 
     return this._qlMutationType || (this._qlMutationType = new GraphQLObjectType({
-        name: `${this.modelName} Manipulations`,
+        name: `${this.modelName}Manipulations`,
         fields: {
           [`delete${this.modelName}`]: {
             type: this.qlType,
             args: {
               id: {
-                type: GraphQLInt
+                type: new GraphQLNonNull(GraphQLInt)
               }
             },
             resolve: (value, {id}) => this.db(this.tableName).where({id}).del()

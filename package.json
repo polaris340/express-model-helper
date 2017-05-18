@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/polaris340/express-model-helper#readme",
   "dependencies": {
+    "graphql": "^0.9.6",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
     "mysql": "^2.13.0",

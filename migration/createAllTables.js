@@ -3,6 +3,8 @@ const files = [];
 const fs = require('fs');
 
 
+
+
 module.exports = (rootPath, excludeDirectories = ['.git', 'node_modules']) => {
   const walker = walk.walk(rootPath, {
     followLinks: false,

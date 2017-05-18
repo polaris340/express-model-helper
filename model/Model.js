@@ -1,4 +1,22 @@
 const {toCamelcase, toSnakecase} = require('../helper/caseHelper');
+const {
+  GraphQLSchema,
+  GraphQLObjectType,
+  GraphQLInt,
+  GraphQLString,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLID,
+  GraphQLBoolean,
+  GraphQLFloat
+} = require('graphql');
+
+const dbTypeQlTypeMap = {
+  increments: GraphQLInt,
+  integer: GraphQLInt,
+  string: GraphQLString,
+  float: GraphQLFloat
+};
 
 const createColumn = (table, columnData) => {
   let col = null;
@@ -31,7 +49,12 @@ class Model {
         // notNullable: true,
         // description: 'column description here. It will not affect to database'
       },
-
+      ...this.references.map(r => {
+        return {
+          name: r.from || `${r.model.tableName}_id`,
+          references: `${r.model.tableName}.${r.to || 'id'}`
+        };
+      }),
       ...this.ownColumns,
 
       {
@@ -46,8 +69,12 @@ class Model {
       }];
   }
 
+  static get modelName() {
+    return this._modelName || (this._modelName = /class\s+(\S+)\s+.+/.exec(this.toString())[1]);
+  }
+
   static get tableName() {
-    return this._tableName || (this._tableName = toSnakecase(/class\s+(\S+)\s+.+/.exec(this.toString())[1]));
+    return toSnakecase(this.modelName);
   }
 
   static getAliasedColumnNames(tableName = this.tableName) {
@@ -55,10 +82,6 @@ class Model {
     return [...(this.columns
       .filter(c => !hiddenColumnsSet.has(c.name))
       .map(c => `${tableName}.${c.name} as ${this.aliasFunc(c.name)}`))];
-  }
-
-  static select() {
-    return this.table.select(this.getAliasedColumnNames());
   }
 
   static get table() {
@@ -92,6 +115,35 @@ class Model {
   static dropTable() {
     this.db.schema.dropTableIfExists(this.tableName);
   }
+
+  static get qlType() {
+    const fields = {};
+    const hiddenColumnsSet = new Set(this.hiddenColumns);
+    this.columns
+      .filter(c => !hiddenColumnsSet.has(c.name))
+      .filter(c => !!c.references)
+      .forEach(c => {
+      fields[toCamelcase[c.name]] = {
+        type: dbTypeQlTypeMap[c.type],
+        description: c.description,
+        resolve: obj => obj[c.name]
+      }
+    });
+
+    this.references.forEach(r => {
+      fields[toCamelcase(r.model.tableName)] = {
+        type: r.model.qlType,
+        description: r.model.description,
+        resolve: obj => obj[r.model.tableName]
+      }
+    });
+
+    return this._qlType || (this._qlType = new GraphQLObjectType({
+        name: this.modelName,
+        description: this.description || `Table ${this.tableName}`,
+        fields
+      }));
+  }
 }
 
 // column names
@@ -99,6 +151,16 @@ Model.ownColumns = [];
 Model.hiddenColumns = [];
 Model.immutableColumns = [];
 Model.aliasFunc = toCamelcase;
+Model.description = '';
+
+
+Model.references = [
+  // {
+  //   model: subclass of Model,
+  //   from: column name. default: model.name + '_id',
+  //   to: default 'id'
+  // }
+];
 
 
 Model.indexes = [

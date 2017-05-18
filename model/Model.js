@@ -17,7 +17,8 @@ const dbTypeQlTypeMap = {
   string: GraphQLString,
   float: GraphQLFloat,
   'enum': GraphQLString,
-  timestamp: GraphQLString
+  timestamp: GraphQLString,
+  json: GraphQLString
 };
 
 const createColumn = (table, columnData) => {

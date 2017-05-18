@@ -1,4 +1,4 @@
-const {toCamelcase, toSnakecase} = require('../helper/caseHelper');
+const {toCamelcase, toSnakecase, toPascalcase} = require('../helper/caseHelper');
 const {
   GraphQLSchema,
   GraphQLObjectType,
@@ -124,10 +124,10 @@ class Model {
     const hiddenColumnsSet = new Set(this.hiddenColumns);
     this.columns.filter(c => !hiddenColumnsSet.has(c.name)).forEach(c => {
       fields[toCamelcase(c.name)] = this.customFields[c.name] || {
-        type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type],
-        description: c.description,
-        resolve: obj => obj[c.name]
-      }
+          type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type],
+          description: c.description,
+          resolve: obj => obj[c.name]
+        }
     });
 
     this.references.forEach(r => {
@@ -144,12 +144,36 @@ class Model {
         fields
       }));
   }
+
+  static get qlMutationType() {
+
+    return this._qlMutationType || (this._qlMutationType = new GraphQLObjectType({
+        name: `${this.modelName} Manipulations`,
+        fields: {
+          [`delete${this.modelName}`]: {
+            type: this.qlType,
+            args: {
+              id: {
+                type: GraphQLInt
+              }
+            },
+            resolve: (value, {id}) => this.db(this.tableName).where({id}).del()
+          }
+        }
+      }));
+  }
+
 }
 
 // column names
 Model.ownColumns = [];
 Model.hiddenColumns = [];
-Model.immutableColumns = [];
+Model.immutableColumns = [
+  // {
+  //   name: '___',
+  //   canCreate: true
+  // }
+];
 Model.aliasFunc = toCamelcase;
 Model.description = '';
 Model.customFields = {}; // name: ql field definition

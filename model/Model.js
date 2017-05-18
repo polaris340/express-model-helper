@@ -28,7 +28,8 @@ class Model {
         // index: true,
         // unique: true,
         // references: 'user.id',
-        // notNullable: true
+        // notNullable: true,
+        // description: 'column description here. It will not affect to database'
       },
 
       ...this.ownColumns,

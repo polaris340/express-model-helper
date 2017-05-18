@@ -18,7 +18,7 @@ const dbTypeQlTypeMap = {
   float: GraphQLFloat,
   'enum': GraphQLString,
   timestamp: GraphQLString,
-  json: GraphQLString
+  json: GraphQL
 };
 
 const createColumn = (table, columnData) => {
@@ -123,7 +123,7 @@ class Model {
     const fields = {};
     const hiddenColumnsSet = new Set(this.hiddenColumns);
     this.columns.filter(c => !hiddenColumnsSet.has(c.name)).forEach(c => {
-      fields[toCamelcase(c.name)] = {
+      fields[toCamelcase(c.name)] = this.customFields[c.name] || {
         type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type],
         description: c.description,
         resolve: obj => obj[c.name]
@@ -152,6 +152,7 @@ Model.hiddenColumns = [];
 Model.immutableColumns = [];
 Model.aliasFunc = toCamelcase;
 Model.description = '';
+Model.customFields = {}; // name: ql field definition
 
 
 Model.references = [

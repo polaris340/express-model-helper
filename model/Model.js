@@ -173,10 +173,11 @@ class Model {
   }
 
 
-  static get queryFields() {
+  static get qlQueryFields() {
     const args = {};
     this.columns.forEach(c => {
-      args[toCamelcase(c.name)] = {type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type]}
+      const type = c.references ? GraphQLInt : dbTypeQlTypeMap[c.type];
+      args[toCamelcase(c.name)] = {type}
     });
 
     return {
@@ -192,13 +193,15 @@ class Model {
   }
 
   static get qlInputType() {
-    const immutableColumnNamesSet = new Set(this.columns.filter(c => !c.immutable && !c.canCreate).map(c => c.name));
+    const immutableColumnNamesSet = new Set(this.columns.filter(c => c.immutable && !c.canCreate).map(c => c.name));
+
     const fields = {};
     this.columns
       .filter(c => !immutableColumnNamesSet.has(c.name) && c.name !== 'id' && c.name !== 'created' && c.name !== 'modified')
       .forEach(c => {
+        const type = c.references ? GraphQLInt : dbTypeQlTypeMap[c.type];
         fields[toCamelcase(c.name)] = this.customFields[c.name] || {
-            type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type]
+            type: c.notNullable ? new GraphQLNonNull(type) : type
           };
       });
 
@@ -216,7 +219,9 @@ class Model {
         args: {
           input: {type: this.qlInputType}
         },
-        resolve: (value, {input}) => this.table.insert(input).then(res => this.table.select().where({id: res[0]}))
+        resolve: (value, {input}) => this.table.insert(input)
+          .then(res => this.table.select().where({id: res[0]}))
+          .then(res => res[0])
       },
       [`delete${this.modelName}`]: {
         type: GraphQLBoolean,
@@ -225,7 +230,7 @@ class Model {
             type: new GraphQLNonNull(GraphQLInt)
           }
         },
-        resolve: (value, {id}) => this.table.where({id}).del().then(() => true, () => false)
+        resolve: (value, {id}) => this.table.where({id}).del().then(affectedRows => !!affectedRows, () => false)
       }
     };
   }

@@ -8,7 +8,8 @@ const {
   GraphQLNonNull,
   GraphQLID,
   GraphQLBoolean,
-  GraphQLFloat
+  GraphQLFloat,
+  GraphQLInputObjectType
 } = require('graphql');
 
 const dbTypeQlTypeMap = {

@@ -145,11 +145,36 @@ class Model {
       }));
   }
 
+  static get qlInputType() {
+    const immutableColumnNamesSet = new Set(this.immutableColumns.filter(ic => !!ic.canCreate).map(ic => ic.name));
+    const fields = {};
+    this.columns
+      .filter(c => !immutableColumnNamesSet.has(c.name) && c.name !== 'id' && c.name !== 'created' && c.name !== 'modified')
+      .forEach(c => {
+        fields[toCamelcase(c.name)] = {
+          type: this.customFields[c.name] || {
+            type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type]
+          }
+        };
+      });
+
+    return this._qlInputType || (this._qlInputType = new GraphQLObjectType({
+        name: `${this.modelName}Attributes`,
+        fields
+      }));
+  }
+
   static get qlMutationType() {
 
     return this._qlMutationType || (this._qlMutationType = new GraphQLObjectType({
-        name: `${this.modelName}Manipulations`,
+        name: `${this.modelName}Mutations`,
         fields: {
+          [`create${this.modelName}`]: {
+            type: this.qlType,
+            args: {
+              input: {type: this.qlInputType}
+            }
+          },
           [`delete${this.modelName}`]: {
             type: this.qlType,
             args: {

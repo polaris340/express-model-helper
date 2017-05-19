@@ -152,11 +152,9 @@ class Model {
     this.columns
       .filter(c => !immutableColumnNamesSet.has(c.name) && c.name !== 'id' && c.name !== 'created' && c.name !== 'modified')
       .forEach(c => {
-        fields[toCamelcase(c.name)] = {
-          type: this.customFields[c.name] || {
+        fields[toCamelcase(c.name)] = this.customFields[c.name] || {
             type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type]
-          }
-        };
+          };
       });
 
     return this._qlInputType || (this._qlInputType = new GraphQLInputObjectType({

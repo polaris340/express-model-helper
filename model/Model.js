@@ -45,7 +45,12 @@ class Model {
       {
         name: 'id',
         type: 'increments', // table.increments(),
-        params: [] // table.increments('id', ...params)
+        params: [], // table.increments('id', ...params)
+        immutable: true,
+        queryable: true,
+        // sortable: false
+        // canCreate: false - only set to true when immutable is true but set value when create row
+        // hidden: false
         //default: ___ // __.defaultTo(default),
         // index: true,
         // unique: true,
@@ -64,17 +69,36 @@ class Model {
       {
         name: 'created',
         type: 'timestamp',
-        default: this.db.raw('current_timestamp')
+        default: this.db.raw('current_timestamp'),
+        immutable: true,
+        sortable: true,
+        index: true
       },
       {
         name: 'modified',
         type: 'timestamp',
-        default: this.db.raw('current_timestamp on update current_timestamp')
+        default: this.db.raw('current_timestamp on update current_timestamp'),
+        immutable: true,
+        sortable: true,
+        index: true
       }];
   }
 
   static get modelName() {
     return this._modelName || (this._modelName = /class\s+(\S+)\s+.+/.exec(this.toString())[1]);
+  }
+
+
+  static set camelPluralName(val) {
+    this._camelPluralName = val;
+  }
+
+  static get camelPluralName() {
+    return this._camelPluralName || this.camelName + 's';
+  }
+
+  static get camelName() {
+    return this._camelName || (this._camelName = toCamelcase(this.tableName));
   }
 
   static get tableName() {
@@ -116,13 +140,15 @@ class Model {
     });
   }
 
+
+
   static dropTable() {
     this.db.schema.dropTableIfExists(this.tableName);
   }
 
   static get qlType() {
     const fields = {};
-    const hiddenColumnsSet = new Set(this.hiddenColumns);
+    const hiddenColumnsSet = new Set(this.columns.filter(c => c.hidden)).map(c => c.name);
     this.columns.filter(c => !hiddenColumnsSet.has(c.name)).forEach(c => {
       fields[toCamelcase(c.name)] = this.customFields[c.name] || {
           type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type],
@@ -146,8 +172,27 @@ class Model {
       }));
   }
 
+
+  static get queryFields() {
+    const args = {};
+    this.columns.forEach(c => {
+      args[toCamelcase(c.name)] = {type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type]}
+    });
+
+    return {
+      [this.camelPluralName]: {
+        type: new GraphQLList(this.qlType),
+        args,
+        resolve: (_, params) => {
+
+          return this.table.select().where(params);
+        }
+      }
+    };
+  }
+
   static get qlInputType() {
-    const immutableColumnNamesSet = new Set(this.immutableColumns.filter(ic => !!ic.canCreate).map(ic => ic.name));
+    const immutableColumnNamesSet = new Set(this.columns.filter(c => c.immutable && !!c.canCreate).map(c => c.name));
     const fields = {};
     this.columns
       .filter(c => !immutableColumnNamesSet.has(c.name) && c.name !== 'id' && c.name !== 'created' && c.name !== 'modified')
@@ -192,13 +237,7 @@ class Model {
 
 // column names
 Model.ownColumns = [];
-Model.hiddenColumns = [];
-Model.immutableColumns = [
-  // {
-  //   name: '___',
-  //   canCreate: true
-  // }
-];
+
 Model.aliasFunc = toCamelcase;
 Model.description = '';
 Model.customFields = {}; // name: ql field definition

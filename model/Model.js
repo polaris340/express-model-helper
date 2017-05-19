@@ -208,29 +208,26 @@ class Model {
       }));
   }
 
-  static get qlMutationType() {
+  static get qlMutationFields() {
 
-    return this._qlMutationType || (this._qlMutationType = new GraphQLObjectType({
-        name: `${this.modelName}Mutations`,
-        fields: {
-          [`create${this.modelName}`]: {
-            type: this.qlType,
-            args: {
-              input: {type: this.qlInputType}
-            },
-            resolve: (value, {input}) => this.table.insert(input).then(res => this.table.select().where({id: res[0]}))
-          },
-          [`delete${this.modelName}`]: {
-            type: this.qlType,
-            args: {
-              id: {
-                type: new GraphQLNonNull(GraphQLInt)
-              }
-            },
-            resolve: (value, {id}) => this.table.where({id}).del()
+    return {
+      [`create${this.modelName}`]: {
+        type: this.qlType,
+        args: {
+          input: {type: this.qlInputType}
+        },
+        resolve: (value, {input}) => this.table.insert(input).then(res => this.table.select().where({id: res[0]}))
+      },
+      [`delete${this.modelName}`]: {
+        type: GraphQLBoolean,
+        args: {
+          id: {
+            type: new GraphQLNonNull(GraphQLInt)
           }
-        }
-      }));
+        },
+        resolve: (value, {id}) => this.table.where({id}).del().then(() => true, () => false)
+      }
+    };
   }
 
 }

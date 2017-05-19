@@ -59,10 +59,10 @@ class Model {
         // description: 'column description here. It will not affect to database'
       },
       ...this.references.map(r => {
-        return {
+        return Object.assign({
           name: r.from || `${r.model.tableName}_id`,
           references: `${r.model.tableName}.${r.to || 'id'}`
-        };
+        }, r.columnParams || {});
       }),
       ...this.ownColumns,
 
@@ -267,7 +267,8 @@ Model.references = [
   // {
   //   model: subclass of Model,
   //   from: column name. default: model.name + '_id',
-  //   to: default 'id'
+  //   to: default 'id',
+  //   columnParams: {}
   // }
 ];
 

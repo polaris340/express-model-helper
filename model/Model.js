@@ -158,7 +158,7 @@ class Model {
         };
       });
 
-    return this._qlInputType || (this._qlInputType = new GraphQLObjectType({
+    return this._qlInputType || (this._qlInputType = new GraphQLInputObjectType({
         name: `${this.modelName}Attributes`,
         fields
       }));

@@ -172,7 +172,8 @@ class Model {
             type: this.qlType,
             args: {
               input: {type: this.qlInputType}
-            }
+            },
+            resolve: (value, {input}) => this.table.insert(input)
           },
           [`delete${this.modelName}`]: {
             type: this.qlType,
@@ -181,7 +182,7 @@ class Model {
                 type: new GraphQLNonNull(GraphQLInt)
               }
             },
-            resolve: (value, {id}) => this.db(this.tableName).where({id}).del()
+            resolve: (value, {id}) => this.table.where({id}).del()
           }
         }
       }));

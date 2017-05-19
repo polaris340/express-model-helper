@@ -173,7 +173,7 @@ class Model {
             args: {
               input: {type: this.qlInputType}
             },
-            resolve: (value, {input}) => this.table.insert(input)
+            resolve: (value, {input}) => this.table.insert(input).then(res => this.table.select().where({id: res[0]}))
           },
           [`delete${this.modelName}`]: {
             type: this.qlType,

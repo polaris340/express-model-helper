@@ -27,7 +27,10 @@ module.exports = (rootPath, excludeDirectories = ['.git', 'node_modules']) => {
     const modelInfo = models[tableName];
     if (modelInfo.added) return;
 
-    modelInfo.references.forEach(setCreateOrder);
+
+    modelInfo.model.references
+      .filter(r => r.model.tableName !== tableName) // 자신 참조하는 경우는 제외
+      .forEach(r => setCreateOrder(r.model.tableName));
     createOrder.push(tableName);
     modelInfo.added = true;
   };
@@ -44,8 +47,7 @@ module.exports = (rootPath, excludeDirectories = ['.git', 'node_modules']) => {
         const model = require(path);
         models[model.tableName] = {
           added: false,
-          model: model,
-          references: model.ownColumns.filter(c => c.references).map(c => c.references.split('.')[0])
+          model: model
         };
       }
     });

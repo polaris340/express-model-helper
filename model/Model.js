@@ -157,7 +157,7 @@ class Model {
         }
     });
 
-    this.references.forEach(r => {
+    this.references.filter(r => r.join).forEach(r => {
       fields[toCamelcase(r.model.tableName)] = {
         type: r.model.qlType,
         description: r.model.description,

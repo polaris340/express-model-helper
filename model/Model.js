@@ -185,8 +185,26 @@ class Model {
         type: new GraphQLList(this.qlType),
         args,
         resolve: (_, params) => {
+          let q = this.table.select();
 
-          return this.table.select().where(objectKeysToSnake(params));
+          this.references.forEach(r => {
+            q = q.leftJoin(r.model.tableName,
+              {
+                [`${this.tableName}.${r.from || r.model.tableName + '_id'}`]: `${r.model.tableName}.${r.to || 'id'}`
+              });
+          });
+
+          q = q
+            .where(objectKeysToSnake(params))
+            .options({nestTables: true});
+
+          return q.then(res => {
+            return res.map(row => {
+              const r = row[this.tableName];
+              this.references.forEach(ref => r[ref.model.tableName] = row[ref.model.tableName]);
+              return r;
+            });
+          });
         }
       }
     };

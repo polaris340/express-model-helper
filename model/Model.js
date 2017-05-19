@@ -106,7 +106,7 @@ class Model {
   }
 
   static getAliasedColumnNames(tableName = this.tableName) {
-    const hiddenColumnsSet = new Set(this.columns.filter(c => c.hidden)).map(c => c.name);
+    const hiddenColumnsSet = new Set(this.columns.filter(c => c.hidden).map(c => c.name));
     return [...(this.columns
       .filter(c => !hiddenColumnsSet.has(c.name))
       .map(c => `${tableName}.${c.name} as ${this.aliasFunc(c.name)}`))];
@@ -148,7 +148,7 @@ class Model {
 
   static get qlType() {
     const fields = {};
-    const hiddenColumnsSet = new Set(this.columns.filter(c => c.hidden)).map(c => c.name);
+    const hiddenColumnsSet = new Set(this.columns.filter(c => c.hidden).map(c => c.name));
     this.columns.filter(c => !hiddenColumnsSet.has(c.name)).forEach(c => {
       fields[toCamelcase(c.name)] = this.customFields[c.name] || {
           type: c.references ? GraphQLInt : dbTypeQlTypeMap[c.type],

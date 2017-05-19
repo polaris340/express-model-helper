@@ -1,4 +1,4 @@
-const {toCamelcase, toSnakecase, toPascalcase} = require('../helper/caseHelper');
+const {toCamelcase, toSnakecase, toPascalcase, objectKeysToSnake} = require('../helper/caseHelper');
 const {
   GraphQLSchema,
   GraphQLObjectType,
@@ -186,7 +186,7 @@ class Model {
         args,
         resolve: (_, params) => {
 
-          return this.table.select().where(params);
+          return this.table.select().where(objectKeysToSnake(params));
         }
       }
     };
@@ -219,7 +219,7 @@ class Model {
         args: {
           input: {type: this.qlInputType}
         },
-        resolve: (value, {input}) => this.table.insert(input)
+        resolve: (value, {input}) => this.table.insert(objectKeysToSnake(input))
           .then(res => this.table.select().where({id: res[0]}))
           .then(res => res[0])
       },

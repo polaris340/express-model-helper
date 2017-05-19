@@ -106,7 +106,7 @@ class Model {
   }
 
   static getAliasedColumnNames(tableName = this.tableName) {
-    const hiddenColumnsSet = new Set(this.hiddenColumns);
+    const hiddenColumnsSet = new Set(this.columns.filter(c => c.hidden)).map(c => c.name);
     return [...(this.columns
       .filter(c => !hiddenColumnsSet.has(c.name))
       .map(c => `${tableName}.${c.name} as ${this.aliasFunc(c.name)}`))];
@@ -192,7 +192,7 @@ class Model {
   }
 
   static get qlInputType() {
-    const immutableColumnNamesSet = new Set(this.columns.filter(c => c.immutable && !!c.canCreate).map(c => c.name));
+    const immutableColumnNamesSet = new Set(this.columns.filter(c => !c.immutable && !c.canCreate).map(c => c.name));
     const fields = {};
     this.columns
       .filter(c => !immutableColumnNamesSet.has(c.name) && c.name !== 'id' && c.name !== 'created' && c.name !== 'modified')

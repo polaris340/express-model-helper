@@ -187,7 +187,7 @@ class Model {
         resolve: (_, params) => {
           let q = this.table.select();
 
-          this.references.forEach(r => {
+          this.references.filter(r => r.join).forEach(r => {
             q = q.leftJoin(r.model.tableName,
               {
                 [`${this.tableName}.${r.from || r.model.tableName + '_id'}`]: `${r.model.tableName}.${r.to || 'id'}`

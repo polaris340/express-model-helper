@@ -198,7 +198,15 @@ class Model {
 
   static serialize(row) {
     if (this._serialize) return this._serialize(row);
-    else return row;
+    else {
+      this.columns.filter(c => c.type === 'json').forEach(c => {
+        if (row[c.name]) {
+          row[c.name] = JSON.parse(row[c.name]);
+        }
+      });
+
+      return row;
+    }
   }
 
   static setBaseQueryFunction(func) {

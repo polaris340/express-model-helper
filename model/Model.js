@@ -12,6 +12,8 @@ const {
   GraphQLInputObjectType
 } = require('graphql');
 
+const _ = require('lodash');
+
 const dbTypeQlTypeMap = {
   increments: GraphQLInt,
   integer: GraphQLInt,
@@ -258,6 +260,38 @@ class Model {
         name: `${this.modelName}Attributes`,
         fields
       }));
+  }
+
+  static parseInsertData(data) {
+    const parsedData = {};
+    this.columns
+      .filter(c => !c.immutable)
+      .forEach(c => {
+        const camelColumnName = toCamelcase(c.name);
+
+        if (camelColumnName in data) {
+          if (c.type === 'json') {
+            parsedData[c.name] = JSON.stringify(data[camelColumnName]);
+          } else {
+            parsedData[c.name] = data[camelColumnName]
+          }
+        }
+      });
+
+    return parsedData;
+  }
+
+  static async insert(data) {
+
+    if (!(data instanceof Array)) {
+      data = [data];
+    }
+    const insertData = data.map(this.parseInsertData);
+
+    const lastInsertId = (await this.table.insert(insertData))[0];
+
+    // TODO: 안전한지 확인. auto increment라 들어간 갯수만큼 순서대로 들어갔을거라고 가정
+    return _.range(lastInsertId - data.length + 1, lastInsertId + 1);
   }
 
   static get qlMutationFields() {

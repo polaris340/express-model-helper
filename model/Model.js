@@ -54,7 +54,6 @@ class Model {
         //default: ___ // __.defaultTo(default),
         // index: true,
         // unique: true,
-        // references: 'user.id',
         // notNullable: true,
         // description: 'column description here. It will not affect to database'
       },
@@ -141,7 +140,6 @@ class Model {
   }
 
 
-
   static dropTable() {
     this.db.schema.dropTableIfExists(this.tableName);
   }
@@ -185,29 +183,52 @@ class Model {
         type: new GraphQLList(this.qlType),
         args,
         resolve: (_, params) => {
-          let q = this.table.select();
 
-          this.references.filter(r => r.join).forEach(r => {
-            q = q.leftJoin(r.model.tableName,
-              {
-                [`${this.tableName}.${r.from || r.model.tableName + '_id'}`]: `${r.model.tableName}.${r.to || 'id'}`
-              });
-          });
-
-          q = q
-            .where(objectKeysToSnake(params))
-            .options({nestTables: true});
-
-          return q.then(res => {
-            return res.map(row => {
-              const r = row[this.tableName];
-              this.references.forEach(ref => r[ref.model.tableName] = row[ref.model.tableName]);
-              return r;
+          return this.getBaseQuery(params)
+            .options({nestTables: true})
+            .then(res => {
+              return res.map(this.serializeRow);
             });
-          });
         }
       }
     };
+  }
+
+  static setSerializeFunction(func) {
+    // 없애려면 null 넣기
+    this._serializeRow = func && func.bind(this);
+  }
+
+  static serializeRow(row) {
+    if (this._serializeRow) return this.serializeRow(row);
+
+    const r = row[this.tableName];
+    this.references
+      .filter(ref => !!row[ref.model.tableName])
+      .forEach(ref => r[ref.model.tableName] = row[ref.model.tableName]);
+    return r;
+  }
+
+  static setBaseQueryFunction(func) {
+    this._getBaseQuery = func && func.bind(this);
+  }
+
+  static getBaseQuery(params) {
+    if (this._getBaseQuery) return this._getBaseQuery(params);
+
+    let q = this.table.select();
+
+    this.references.filter(r => r.join).forEach(r => {
+      q = q.leftJoin(r.model.tableName,
+        {
+          [`${this.tableName}.${r.from || r.model.tableName + '_id'}`]: `${r.model.tableName}.${r.to || 'id'}`
+        });
+    });
+
+    q = q
+      .where(objectKeysToSnake(params));
+
+    return q;
   }
 
   static get qlInputType() {

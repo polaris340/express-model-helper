@@ -1,4 +1,4 @@
-const {toCamelcase, toSnakecase, toPascalcase, objectKeysToSnake} = require('../helper/caseHelper');
+const {toCamelcase, toSnakecase, toPascalcase, objectKeysToCamel, objectKeysToSnake} = require('../helper/caseHelper');
 const {
   GraphQLSchema,
   GraphQLObjectType,
@@ -205,7 +205,7 @@ class Model {
         }
       });
 
-      return row;
+      return objectKeysToCamel(row);
     }
   }
 
@@ -233,7 +233,7 @@ class Model {
           const r = this.serialize(row[this.tableName]);
           this.references
             .filter(ref => !!row[ref.model.tableName])
-            .forEach(ref => r[ref.model.tableName] = (ref.model.serialize(row[ref.model.tableName])));
+            .forEach(ref => r[toCamelcase(ref.model.tableName)] = (ref.model.serialize(row[ref.model.tableName])));
           return r;
         });
       });

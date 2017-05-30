@@ -187,7 +187,13 @@ class Model {
           return this.getBaseQuery(params)
             .options({nestTables: true})
             .then(res => {
-              return res.map(this.serializeRow);
+              return res.map(row => {
+                const r = this.serialize(row[this.tableName]);
+                this.references
+                  .filter(ref => !!row[ref.model.tableName])
+                  .forEach(ref => r[ref.model.tableName] = (ref.model.serialze(row[ref.model.tableName])));
+                return r;
+              });
             });
         }
       }
@@ -196,17 +202,12 @@ class Model {
 
   static setSerializeFunction(func) {
     // 없애려면 null 넣기
-    this._serializeRow = func && func.bind(this);
+    this._serialize = func && func.bind(this);
   }
 
-  static serializeRow(row) {
-    if (this._serializeRow) return this.serializeRow(row);
-
-    const r = row[this.tableName];
-    this.references
-      .filter(ref => !!row[ref.model.tableName])
-      .forEach(ref => r[ref.model.tableName] = row[ref.model.tableName]);
-    return r;
+  static serialize(row) {
+    if (this._serialize) return this._serialize(row);
+    else return row;
   }
 
   static setBaseQueryFunction(func) {

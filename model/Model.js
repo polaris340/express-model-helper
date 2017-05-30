@@ -184,17 +184,7 @@ class Model {
         args,
         resolve: (_, params) => {
 
-          return this.getBaseQuery(params)
-            .options({nestTables: true})
-            .then(res => {
-              return res.map(row => {
-                const r = this.serialize(row[this.tableName]);
-                this.references
-                  .filter(ref => !!row[ref.model.tableName])
-                  .forEach(ref => r[ref.model.tableName] = (ref.model.serialze(row[ref.model.tableName])));
-                return r;
-              });
-            });
+          return this.getBaseQuery(params);
         }
       }
     };
@@ -227,7 +217,17 @@ class Model {
     });
 
     q = q
-      .where(objectKeysToSnake(params));
+      .where(objectKeysToSnake(params))
+      .options({nestTables: true})
+      .then(res => {
+        return res.map(row => {
+          const r = this.serialize(row[this.tableName]);
+          this.references
+            .filter(ref => !!row[ref.model.tableName])
+            .forEach(ref => r[ref.model.tableName] = (ref.model.serialze(row[ref.model.tableName])));
+          return r;
+        });
+      });
 
     return q;
   }

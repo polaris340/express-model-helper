@@ -15,6 +15,7 @@ const {
 const dbTypeQlTypeMap = {
   increments: GraphQLInt,
   integer: GraphQLInt,
+  bigInteger: GraphQLInt,
   string: GraphQLString,
   float: GraphQLFloat,
   'enum': GraphQLString,

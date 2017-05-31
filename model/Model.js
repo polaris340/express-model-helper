@@ -286,7 +286,7 @@ class Model {
     if (!(data instanceof Array)) {
       data = [data];
     }
-    const insertData = data.map(this.parseInsertData);
+    const insertData = data.map(this.parseInsertData.bind(this));
 
     const lastInsertId = (await this.table.insert(insertData))[0];
 

@@ -218,6 +218,11 @@ class Model {
   static getBaseQuery(params) {
     if (this._getBaseQuery) return this._getBaseQuery(params);
 
+    if (!params.client && !params.bindings && !params.sql) {
+      // raw가 아닌 경우
+      params = objectKeysToSnake(params);
+    }
+
     let q = this.table.select();
 
     this.references.filter(r => r.join).forEach(r => {
@@ -228,7 +233,7 @@ class Model {
     });
 
     q = q
-      .where(objectKeysToSnake(params))
+      .where(params)
       .options({nestTables: true})
       .then(res => {
         return res.map(row => {

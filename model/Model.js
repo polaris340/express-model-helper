@@ -295,8 +295,8 @@ class Model {
 
     const lastInsertId = (await this.table.insert(insertData))[0];
 
-    // TODO: 안전한지 확인. auto increment라 들어간 갯수만큼 순서대로 들어갔을거라고 가정
-    return _.range(lastInsertId - data.length + 1, lastInsertId + 1);
+    // lastInsertId가 첫번째 id
+    return _.range(lastInsertId, lastInsertId + data.length);
   }
 
   static get qlMutationFields() {
